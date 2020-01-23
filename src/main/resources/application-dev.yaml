@@ -1,0 +1,19 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /v1/dev
+
+spring:
+  data:
+    mongodb:
+      database: auth_manager_db
+      uri: mongodb+srv://caltech_auth_manager:6R3nykC9BYxWFV4R@cluster0-0nvgt.mongodb.net/test?retryWrites=true&w=majority
+
+jwt:
+  header: Authorization
+  secret: mySecret
+  expiration: 604800
+  route:
+    authentication:
+      path: auth
+      refresh: refresh
