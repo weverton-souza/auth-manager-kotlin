@@ -2,6 +2,7 @@ package auth.manager.swagger
 
 import com.google.common.base.Predicates
 import com.google.common.collect.Lists
+import com.google.common.collect.Ordering
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import springfox.documentation.builders.ApiInfoBuilder
@@ -29,6 +30,9 @@ class SwaggerConfiguration {
                 .useDefaultResponseMessages(false)
                 .securitySchemes(listOf(ApiKey("JWT", "Authorization", "header")))
                 .securityContexts(Lists.newArrayList(securityContext()))
+                .operationOrdering(object : Ordering<Operation>() {
+                    override fun compare(p0: Operation?, p1: Operation?): Int = if (p0?.position ?: 0 >= p1?.position ?: 0) -1 else 1
+                })
                 .genericModelSubstitutes(Optional::class.java)
 
     private fun metadata(): ApiInfo = ApiInfoBuilder()

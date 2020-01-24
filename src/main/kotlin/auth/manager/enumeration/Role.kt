@@ -9,8 +9,8 @@ import com.fasterxml.jackson.databind.JsonNode
 import java.io.IOException
 
 enum class Role(val text: String) {
-    ADMIN_LEV0("Administrator"),
-    USER_LEV0("User");
+    ROLE_ADMIN_LEV0("Administrator"),
+    ROLE_USER_LEV0("User");
 
     internal class RoleDeserializer : JsonDeserializer<Role>() {
         @Throws(IOException::class, JsonProcessingException::class)

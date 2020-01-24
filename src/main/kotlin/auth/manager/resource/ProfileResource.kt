@@ -1,30 +1,35 @@
 package auth.manager.resource
 
-import auth.manager.domain.Profile
 import auth.manager.dto.ProfileDTO
-import auth.manager.dto.UserLogin
 import auth.manager.generics.Response
-import auth.manager.security.configuration.UserService
 import auth.manager.service.ProfileService
+import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
-import io.swagger.annotations.Authorization
-import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
-import javax.validation.Valid
 
 @RestController
 @CrossOrigin
 @RequestMapping("/profiles")
+@Api(value="Profile", tags=["Profile"], description="Profile Resources")
 class ProfileResource(val profileService: ProfileService) {
 
     @PostMapping
-    fun save(@RequestBody profileDTO: ProfileDTO): ProfileDTO = this.profileService.saveOrUpdate(profileDTO)
+    @ApiOperation(value = "Save a new profile.", notes = "Any user can save a new profile.")
+    fun save(@RequestBody profileDTO: ProfileDTO): Response<ProfileDTO> = this.profileService.saveOrUpdate(profileDTO)
 
     @PutMapping
-    fun update(@RequestBody profileDTO: ProfileDTO): ProfileDTO = this.profileService.saveOrUpdate(profileDTO)
+    @PreAuthorize("hasRole('ADMIN_LEV0')")
+    @ApiOperation(value = "Update a existent profile.", notes = "Only admins can update a profile.")
+    fun update(@RequestBody profileDTO: ProfileDTO): Response<ProfileDTO> = this.profileService.saveOrUpdate(profileDTO)
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN_LEV0')")
+    @ApiOperation(value = "Find all profiles.", notes = "Only admins can get profiles.")
+    fun findAll(): Response<MutableList<ProfileDTO>> = this.profileService.findAll()
 
-    fun findAll(): MutableList<Profile> = this.profileService.findAll()
-
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN_LEV0')")
+    @ApiOperation(value = "Delete a profile by id.", notes = "Only admins can delete a profile.")
+    fun delete(@PathVariable id: String) = this.profileService.delete(id)
 }

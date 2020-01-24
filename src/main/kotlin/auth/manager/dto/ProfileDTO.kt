@@ -3,11 +3,11 @@ package auth.manager.dto
 import auth.manager.domain.Profile
 import auth.manager.dto.interfaces.IDTO
 import auth.manager.enumeration.Role
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonInclude
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import java.util.stream.Collectors
 
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class ProfileDTO(var id: String?,
                       var nickname: String?,
                       var username: String?,

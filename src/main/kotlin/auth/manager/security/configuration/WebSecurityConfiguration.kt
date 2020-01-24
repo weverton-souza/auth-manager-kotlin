@@ -1,30 +1,49 @@
 package auth.manager.security.configuration
 
-import auth.manager.security.jwt.JwtTokenFilterConfigurer
-import auth.manager.security.jwt.JwtTokenProvider
+import auth.manager.security.jwt.JwtAuthenticationFilter
+import auth.manager.security.jwt.JwtConfiguration
+import org.springframework.boot.autoconfigure.security.SecurityProperties
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
+import org.springframework.core.annotation.Order
 import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.builders.WebSecurity
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.config.http.SessionCreationPolicy
+import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.web.cors.CorsConfiguration
+import org.springframework.web.cors.CorsConfigurationSource
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
-@Configuration
+
+@EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-class WebSecurityConfiguration(var jwtTokenProvider: JwtTokenProvider): WebSecurityConfigurerAdapter() {
+@Order(SecurityProperties.DEFAULT_FILTER_ORDER)
+class WebSecurityConfiguration(val userService: UserService,
+                               val jwtConfiguration: JwtConfiguration): WebSecurityConfigurerAdapter(), WebMvcConfigurer {
 
     @Throws(Exception::class)
     override fun configure(http: HttpSecurity) {
-        http.csrf().disable()
-        http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        http.authorizeRequests()
-                .antMatchers("/profiles/**").hasRole("ADMIN_LEV0")
+        http
+                .cors()
+                .disable()
+                .csrf()
+                .disable();
+        http
+                .addFilter(JwtAuthenticationFilter(authenticationManager()!!,
+                        this.jwtConfiguration, userService))
+        http
+                .authorizeRequests()
                 .anyRequest().authenticated()
-        http.apply(JwtTokenFilterConfigurer(jwtTokenProvider));
+        http.
+                sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
     }
 
     @Throws(Exception::class)
@@ -43,6 +62,18 @@ class WebSecurityConfiguration(var jwtTokenProvider: JwtTokenProvider): WebSecur
     @Throws(Exception::class)
     override fun authenticationManager(): AuthenticationManager? {
         return super.authenticationManager()
+    }
+
+    @Throws(Exception::class)
+    override fun configure(auth: AuthenticationManagerBuilder) {
+        auth.userDetailsService<UserDetailsService>(this.userService).passwordEncoder(bCryptPasswordEncoder())
+    }
+
+    @Bean
+    fun corsConfigurationSource(): CorsConfigurationSource {
+        val source = UrlBasedCorsConfigurationSource()
+        source.registerCorsConfiguration("/**", CorsConfiguration().applyPermitDefaultValues())
+        return source
     }
 
     @Bean

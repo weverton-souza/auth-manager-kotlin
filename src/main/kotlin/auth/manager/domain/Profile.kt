@@ -4,53 +4,52 @@ import auth.manager.domain.interfaces.IDomain
 import auth.manager.dto.ProfileDTO
 import auth.manager.enumeration.Role
 import org.springframework.data.mongodb.core.mapping.Document
-import org.springframework.security.authentication.jaas.AuthorityGranter
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import java.util.stream.Collectors
 
 @Document
-class Profile (private val id: String?,
-               private val nickname: String?,
-               private val username: String?,
-               private val accountNonExpired: Boolean?,
-               private val accountNonLocked: Boolean?,
-               private val credentialsNonExpired: Boolean?,
-               private val enabled: Boolean?,
-               private val password: String?,
-               private val authorities: Collection<SimpleGrantedAuthority>?): IDomain, UserDetails {
+data class Profile(val id: String?,
+                    val nickname: String?,
+                    private val username: String?,
+                    val accountNonExpired: Boolean?,
+                    val accountNonLocked: Boolean?,
+                    val credentialsNonExpired: Boolean?,
+                    val enabled: Boolean?,
+                    private val password: String?,
+                    private var authorities: Collection<SimpleGrantedAuthority>?): IDomain, UserDetails {
 
-        override fun getAuthorities(): Collection<GrantedAuthority> {
-            val authorities: ArrayList<GrantedAuthority> = ArrayList()
-            Role.values().forEach { role -> authorities.add(SimpleGrantedAuthority(role.name)) }
-            return authorities
-        }
+    override fun getAuthorities(): MutableCollection<out GrantedAuthority>? {
+        return authorities
+                ?.stream()
+                ?.map { x: GrantedAuthority -> SimpleGrantedAuthority(x.authority) }
+                ?.collect(Collectors.toList())
+    }
 
-        override fun isEnabled(): Boolean = this.enabled!!
+    override fun isEnabled(): Boolean = this.enabled!!
 
-        override fun getUsername(): String = this.username!!
+    override fun getUsername(): String = this.username!!
 
-        override fun isCredentialsNonExpired(): Boolean = this.credentialsNonExpired!!
+    override fun isCredentialsNonExpired(): Boolean = this.credentialsNonExpired!!
 
-        override fun getPassword(): String = this.password!!
+    override fun getPassword(): String? = this.password
 
-        override fun isAccountNonExpired(): Boolean = this.accountNonExpired!!
+    override fun isAccountNonExpired(): Boolean = this.accountNonExpired!!
 
-        override fun isAccountNonLocked(): Boolean = this.accountNonLocked!!
+    override fun isAccountNonLocked(): Boolean = this.accountNonLocked!!
 
-        override fun toDTO(): ProfileDTO = ProfileDTO
-                .Builder()
-                    .id(this.id!!)
-                    .nickname(this.nickname!!)
-                    .username(this.username!!)
-                    .accountNonExpired(this.accountNonExpired!!)
-                    .accountNonLocked(this.accountNonLocked!!)
-                    .credentialsNonExpired(this.credentialsNonExpired!!)
-                    .enabled(this.enabled!!)
-                    .password(this.password!!)
-                    .authorities( this.authorities!!.stream().map { Role.valueOf(it.authority) }.collect(Collectors.toList()) )
-                    .build()
+    override fun toDTO(): ProfileDTO = ProfileDTO
+            .Builder()
+                .id(this.id!!)
+                .nickname(this.nickname!!)
+                .username(this.username!!)
+                .accountNonExpired(this.accountNonExpired!!)
+                .accountNonLocked(this.accountNonLocked!!)
+                .credentialsNonExpired(this.credentialsNonExpired!!)
+                .enabled(this.enabled!!)
+                .authorities( this.authorities!!.stream().map { Role.valueOf(it.authority) }.collect(Collectors.toList()) )
+                .build()
 
         class Builder(private var id: String? = null,
                       private var nickname: String? = null,
