@@ -1,0 +1,13 @@
+version: '3.3'
+services:
+  authmanager:
+    image: auth-manager-kotlin-api:v1
+    working_dir: /opt
+    command: java -Djava.awt.headless=true -Dspring.profiles.active=dev -jar auth-manager-kotlin-api.war
+    networks:
+      - catech-networks
+    ports:
+      - "8080:8080"
+networks:
+  catech-networks:
+    driver: bridge
