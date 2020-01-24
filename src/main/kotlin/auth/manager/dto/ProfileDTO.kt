@@ -2,9 +2,10 @@ package auth.manager.dto
 
 import auth.manager.domain.Profile
 import auth.manager.dto.interfaces.IDTO
+import auth.manager.enumeration.Role
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import org.springframework.security.authentication.jaas.AuthorityGranter
-import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.authority.SimpleGrantedAuthority
+import java.util.stream.Collectors
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class ProfileDTO(var id: String?,
@@ -15,7 +16,7 @@ data class ProfileDTO(var id: String?,
                       var credentialsNonExpired: Boolean?,
                       var enabled: Boolean?,
                       var password: String?,
-                      var authorities: Collection<AuthorityGranter>?): IDTO {
+                      var authorities: Collection<Role>?): IDTO {
 
     override fun toDomain(): Profile = Profile
             .Builder()
@@ -27,7 +28,7 @@ data class ProfileDTO(var id: String?,
                 .credentialsNonExpired(this.credentialsNonExpired!!)
                 .enabled(this.enabled!!)
                 .password(this.password!!)
-                .authorities(this.authorities!!)
+                .authorities(this.authorities!!.stream().map { SimpleGrantedAuthority(it.name) }.collect(Collectors.toList()) )
             .build()
 
     data class Builder(var id: String? = null,
@@ -38,7 +39,7 @@ data class ProfileDTO(var id: String?,
                        var credentialsNonExpired: Boolean? = false,
                        var enabled: Boolean? = false,
                        var password: String? = null,
-                       var authorities: Collection<AuthorityGranter>? = null) {
+                       var authorities: List<Role>? = null) {
 
         fun id(id: String) = apply { this.id = id }
         fun nickname(nickname: String) = apply { this.nickname = nickname }
@@ -48,7 +49,8 @@ data class ProfileDTO(var id: String?,
         fun credentialsNonExpired(credentialsNonExpired: Boolean) = apply { this.credentialsNonExpired = credentialsNonExpired }
         fun enabled(enabled: Boolean) = apply { this.enabled = enabled }
         fun password(password: String) = apply { this.password = password }
-        fun authorities(authorities: Collection<AuthorityGranter>) = apply { this.authorities = authorities }
+        fun authorities(authorities: List<Role>) = apply { this.authorities = authorities }
+
         fun build() = ProfileDTO(id, nickname, username, accountNonExpired, accountNonLocked, credentialsNonExpired, enabled, password, authorities)
     }
 }

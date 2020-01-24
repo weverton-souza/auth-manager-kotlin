@@ -4,7 +4,7 @@ import auth.manager.domain.Profile
 import auth.manager.dto.ProfileDTO
 import auth.manager.dto.UserLogin
 import auth.manager.generics.Response
-import auth.manager.security.configuration.ProfileService
+import auth.manager.security.configuration.UserService
 import auth.manager.security.jwt.JwtTokenProvider
 import io.swagger.annotations.Api
 import io.swagger.annotations.ApiOperation
@@ -22,42 +22,39 @@ import javax.validation.Valid
 @RestController
 @RequestMapping("/auth")
 @Api(value = "Auth", description = "User Authorization")
-class AuthResource(var profileService: ProfileService,
+class AuthResource(var userService: UserService,
                    val authenticationManager: AuthenticationManager,
                    val jwtTokenProvider: JwtTokenProvider) {
 
     @PostMapping
     @Throws(AuthenticationException::class)
     fun createAuthenticationToken(@RequestBody userLogin: UserLogin): ResponseEntity<*>? {
-        val authentication: Authentication = authenticationManager.authenticate(
-                UsernamePasswordAuthenticationToken(
-                        userLogin.username,
-                        userLogin.userPassword
-                )
+        val authentication: Authentication = authenticationManager.authenticate (
+                UsernamePasswordAuthenticationToken( userLogin.username, userLogin.userPassword )
         )
         SecurityContextHolder.getContext().authentication = authentication
 
-        val profile: Profile = profileService.loadUserByUsername(userLogin.username)
+        val profile: Profile = userService.loadUserByUsername(userLogin.username)
         val token: String = jwtTokenProvider.createToken(profile.username, profile.authorities)
 
         return ResponseEntity.ok<Any>(token)
     }
 
-    @GetMapping("/sign-in")
-    @ApiOperation(value = "Signing in of the user")
-    fun signIn(@RequestBody @Valid userLogin: UserLogin): Response<ProfileDTO> = Response.Builder<ProfileDTO>()
-                .content(this.profileService.loadUserByUsername(userLogin.username).toDTO())
-                .code(HttpStatus.OK.name)
-                .message(HttpStatus.OK.reasonPhrase)
-                .build()
-
-    @PostMapping("/sign-up")
-    @ApiOperation(value = "Sign up in of the user")
-    fun signUp(@RequestBody @Valid profileDTO: ProfileDTO): Response<ProfileDTO> = Response.Builder<ProfileDTO>()
-            .content(this.profileService.saveOrUpdate(profileDTO))
-            .code(HttpStatus.CREATED.name)
-            .message(HttpStatus.CREATED.reasonPhrase)
-            .build()
+//    @GetMapping("/sign-in")
+//    @ApiOperation(value = "Signing in of the user")
+//    fun signIn(@RequestBody @Valid userLogin: UserLogin): Response<ProfileDTO> = Response.Builder<ProfileDTO>()
+//                .content(this.userService.loadUserByUsername(userLogin.username).toDTO())
+//                .code(HttpStatus.OK.name)
+//                .message(HttpStatus.OK.reasonPhrase)
+//                .build()
+//
+//    @PostMapping("/sign-up")
+//    @ApiOperation(value = "Sign up in of the user")
+//    fun signUp(@RequestBody @Valid profileDTO: ProfileDTO): Response<ProfileDTO> = Response.Builder<ProfileDTO>()
+//            .content(this.userService.saveOrUpdate(profileDTO))
+//            .code(HttpStatus.CREATED.name)
+//            .message(HttpStatus.CREATED.reasonPhrase)
+//            .build()
 
 //    @GetMapping("/refresh")
 //    fun refreshAndGetAuthenticationToken(request: HttpServletRequest): ResponseEntity<*>? {

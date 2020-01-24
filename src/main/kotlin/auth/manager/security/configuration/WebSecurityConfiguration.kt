@@ -4,6 +4,7 @@ import auth.manager.security.jwt.JwtTokenFilterConfigurer
 import auth.manager.security.jwt.JwtTokenProvider
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -11,7 +12,6 @@ import org.springframework.security.config.annotation.web.builders.WebSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
 import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
 
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -21,11 +21,9 @@ class WebSecurityConfiguration(var jwtTokenProvider: JwtTokenProvider): WebSecur
     override fun configure(http: HttpSecurity) {
         http.csrf().disable()
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-
         http.authorizeRequests()
-                .antMatchers("/auth/**").permitAll()
+                .antMatchers("/profiles/**").hasRole("ADMIN_LEV0")
                 .anyRequest().authenticated()
-
         http.apply(JwtTokenFilterConfigurer(jwtTokenProvider));
     }
 
@@ -38,6 +36,7 @@ class WebSecurityConfiguration(var jwtTokenProvider: JwtTokenProvider): WebSecur
                 .antMatchers("/webjars/**") //
                 .antMatchers("/public")
                 .antMatchers("/auth/**")
+                .antMatchers(HttpMethod.POST, "/profiles/**")
     }
 
     @Bean
@@ -47,5 +46,5 @@ class WebSecurityConfiguration(var jwtTokenProvider: JwtTokenProvider): WebSecur
     }
 
     @Bean
-    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder(12)
+    fun bCryptPasswordEncoder(): BCryptPasswordEncoder = BCryptPasswordEncoder()
 }

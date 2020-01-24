@@ -2,14 +2,13 @@ package auth.manager.domain
 
 import auth.manager.domain.interfaces.IDomain
 import auth.manager.dto.ProfileDTO
-import auth.manager.enums.Role
+import auth.manager.enumeration.Role
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.security.authentication.jaas.AuthorityGranter
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import java.util.stream.Collectors
-import java.util.stream.Stream
 
 @Document
 class Profile (private val id: String?,
@@ -20,17 +19,10 @@ class Profile (private val id: String?,
                private val credentialsNonExpired: Boolean?,
                private val enabled: Boolean?,
                private val password: String?,
-               private val authorities: Collection<AuthorityGranter>?): IDomain, UserDetails {
-
-//        override fun getAuthorities(): MutableCollection<out GrantedAuthority>? = this.authorities
-//        private Collection<? extends GrantedAuthority> getAuthorities(Collection<Role> roles) {
-//
-//        }
+               private val authorities: Collection<SimpleGrantedAuthority>?): IDomain, UserDetails {
 
         override fun getAuthorities(): Collection<GrantedAuthority> {
             val authorities: ArrayList<GrantedAuthority> = ArrayList()
-
-            Role.values().forEach { role -> authorities.add(SimpleGrantedAuthority(role.name)) }
             Role.values().forEach { role -> authorities.add(SimpleGrantedAuthority(role.name)) }
             return authorities
         }
@@ -57,18 +49,18 @@ class Profile (private val id: String?,
                     .credentialsNonExpired(this.credentialsNonExpired!!)
                     .enabled(this.enabled!!)
                     .password(this.password!!)
-                    .authorities(this.authorities!!)
+                    .authorities( this.authorities!!.stream().map { Role.valueOf(it.authority) }.collect(Collectors.toList()) )
                     .build()
 
-        class Builder( var id: String? = null,
-                       var nickname: String? = null,
-                       var username: String? = null,
-                       var accountNonExpired: Boolean? = false,
-                       var accountNonLocked: Boolean? = false,
-                       var credentialsNonExpired: Boolean? = false,
-                       var enabled: Boolean? = false,
-                       var password: String? = null,
-                       var authorities: Collection<AuthorityGranter>? = null) {
+        class Builder(private var id: String? = null,
+                      private var nickname: String? = null,
+                      private var username: String? = null,
+                      private var accountNonExpired: Boolean? = false,
+                      private var accountNonLocked: Boolean? = false,
+                      private var credentialsNonExpired: Boolean? = false,
+                      private var enabled: Boolean? = false,
+                      private var password: String? = null,
+                      private var authorities: Collection<SimpleGrantedAuthority>? = null) {
 
             fun id(id: String) = apply { this.id = id }
             fun nickname(nickname: String) = apply { this.nickname = nickname }
@@ -78,7 +70,9 @@ class Profile (private val id: String?,
             fun credentialsNonExpired(credentialsNonExpired: Boolean) = apply { this.credentialsNonExpired = credentialsNonExpired }
             fun enabled(enabled: Boolean) = apply { this.enabled = enabled }
             fun password(password: String) = apply { this.password = password }
-            fun authorities(authorities: Collection<AuthorityGranter>) = apply { this.authorities = authorities }
+            fun authorities(authorities: Collection<SimpleGrantedAuthority>) = apply {
+                this.authorities = authorities
+            }
             fun build() = Profile(id, nickname, username, accountNonExpired, accountNonLocked, credentialsNonExpired, enabled, password, authorities)
         }
 

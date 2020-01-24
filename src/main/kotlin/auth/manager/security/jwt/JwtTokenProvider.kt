@@ -1,12 +1,12 @@
 package auth.manager.security.jwt
 
-import auth.manager.enums.Role
 import auth.manager.exceptions.ExceptionHandler
-import auth.manager.security.configuration.ProfileService
+import auth.manager.security.configuration.UserService
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm
+import org.apache.commons.lang3.time.DateUtils
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
@@ -20,12 +20,11 @@ import javax.servlet.http.HttpServletRequest
 
 
 @Component
-class JwtTokenProvider(val profileService: ProfileService) {
-    val secretKey: String = ""
-    val validityInMilliseconds: String = ""
+class JwtTokenProvider(val userService: UserService) {
+    val secretKey: String = "5EstjYPSVvWK5m3sPPR7H29sr34mk5Rf7Z7BeUuVkVQxnap8MVBdQMmSgaAUnAQkymAaqMeFuqQND5xGzhgRc39QtECbd9zx8xFe"
 
     fun getAuthentication(token: String): Authentication {
-        val userDetails: UserDetails = this.profileService.loadUserByUsername(getUsername(token))
+        val userDetails: UserDetails = this.userService.loadUserByUsername(getUsername(token))
         return UsernamePasswordAuthenticationToken(userDetails, "", userDetails.authorities)
     }
 
@@ -33,7 +32,7 @@ class JwtTokenProvider(val profileService: ProfileService) {
         val claims: Claims = Jwts.claims().setSubject(username)
         claims["auth"] = roles.stream().map { s -> SimpleGrantedAuthority(s.authority) }.filter(Objects::nonNull).collect(Collectors.toList())
         val now = Date()
-        val validity = Date(now.time.toString() + validityInMilliseconds)
+        val validity = DateUtils.addHours(Date(), 1);
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(now)
@@ -42,7 +41,7 @@ class JwtTokenProvider(val profileService: ProfileService) {
                 .compact()
     }
 
-    fun getUsername(token: String?): String=  Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).body.subject
+    fun getUsername(token: String?): String =  Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).body.subject
 
     fun resolveToken(req: HttpServletRequest): String {
         val bearerToken = req.getHeader("Authorization")
@@ -55,6 +54,7 @@ class JwtTokenProvider(val profileService: ProfileService) {
             Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token)
             true
         } catch (e: JwtException) {
+            e.printStackTrace()
             throw ExceptionHandler("Expired or invalid JWT token", HttpStatus.INTERNAL_SERVER_ERROR)
         } catch (e: IllegalArgumentException) {
             throw ExceptionHandler("Expired or invalid JWT token", HttpStatus.INTERNAL_SERVER_ERROR)
